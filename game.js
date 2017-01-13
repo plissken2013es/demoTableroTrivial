@@ -22,9 +22,12 @@ Trivial.Preloader.prototype = {
 
 Trivial.Game = function () {
     this.BLINK_TIME = 250;
+    this.HERO_VEL   = 90;
     
     this.hero = null;
     this.heroPos = 3;
+    this.heroTarget = 0;
+    this.heroMoving = false;
     
     this.dice = null;
     this.boardTiles = null;
@@ -82,9 +85,14 @@ Trivial.Game.prototype = {
         // hero
         this.heroPos = this.rnd.between(0, this.logicBoard.length-1);
         var pos = this.getPosForHero(this.heroPos);
-        this.hero = this.add.image(pos.x, pos.y, "hero");
+        this.heroTarget = this.heroPos;
+        this.hero = this.add.sprite(pos.x, pos.y, "hero");
         this.hero.anchor.setTo(0.5, 1);
         this.game.physics.arcade.enable(this.hero);
+        this.hero.body.width = 30;
+        this.hero.body.height = 10;
+        this.hero.body.offset.setTo(10, 80);
+        this.heroMoving = false;
         
         // buttons
         this.btnBlue = this.add.button(80, 370, "btn_blue", this.onBtnPress, this);
@@ -94,7 +102,7 @@ Trivial.Game.prototype = {
         this.dice = this.rnd.between(1, 6);
         console.log("launched dice: ", this.dice);
         //mark the two available targets
-        this.calculateTargets();
+        this.calculateTargetsFor(this.heroPos);
 
         //  Press D to toggle the debug display
         this.debugKey = this.input.keyboard.addKey(Phaser.Keyboard.D);
@@ -103,11 +111,41 @@ Trivial.Game.prototype = {
     
     update: function () {
         this.boardTiles.sort('y', Phaser.Group.SORT_ASCENDING);
+        
+        if (this.heroMoving) {
+            var tgtX = this.getPosForHero(this.heroTarget).x - 20;
+            var tgtY = this.getPosForHero(this.heroTarget).y + 5;
+            var nearX = this.math.fuzzyEqual(tgtX, this.hero.x, 6);
+            var nearY = this.math.fuzzyEqual(tgtY, this.hero.y, 6);
+            if (nearX && nearY) {
+                this.heroMoving = false;
+                this.hero.body.velocity.x = 0;
+                this.hero.body.velocity.y = 0;
+                this.hero.x = tgtX;
+                this.hero.y = tgtY;
+                this.heroPos = this.heroTarget;
+                this.blinkTimer.resume();
+                this.dice = this.rnd.between(1, 6);
+                this.calculateTargetsFor(this.heroPos);
+            } else {
+                if (this.math.fuzzyGreaterThan(this.hero.x, tgtX, 6)) {
+                    this.hero.body.velocity.x = -this.HERO_VEL;
+                } else if (this.math.fuzzyGreaterThan(tgtX, this.hero.x, 6)) {
+                    this.hero.body.velocity.x = this.HERO_VEL;
+                }
+                if (this.math.fuzzyGreaterThan(tgtY, this.hero.y, 6)) {
+                    this.hero.body.velocity.y = this.HERO_VEL;
+                } else if (this.math.fuzzyGreaterThan(this.hero.y, tgtY, 6)) {
+                    this.hero.body.velocity.y = -this.HERO_VEL;
+                }                    
+            }            
+        }
     },
 
     render: function () {
         if (this.showDebug) {
             this.game.debug.text("Debug ON", 32, 32);
+            this.game.debug.body(this.hero, "#ff0000", false);
         }
     },
     
@@ -130,11 +168,11 @@ Trivial.Game.prototype = {
         }
     },
     
-    calculateTargets: function() {
-        this.tgt1 = this.heroPos - this.dice;
-        if (this.tgt1 < 0) this.tgt1 = this.logicBoard.length + this.tgt1;
-        this.tgt2 = this.heroPos + this.dice;
-        if (this.tgt2 >= this.logicBoard.length) this.tgt2 = this.tgt2 - this.logicBoard.length;
+    calculateTargetsFor: function(tgt) {
+        this.tgt2 = tgt - this.dice;
+        if (this.tgt2 < 0) this.tgt2 = this.logicBoard.length + this.tgt2;
+        this.tgt1 = tgt + this.dice;
+        if (this.tgt1 >= this.logicBoard.length) this.tgt1 = this.tgt1 - this.logicBoard.length;
         
         this.clearBlinks();
         this.logicBoard[this.tgt1].blinking = "left";
@@ -155,10 +193,10 @@ Trivial.Game.prototype = {
     
     getPosForHero: function(boardTile) {
         return new Phaser.Point (
-            22 + this.logicBoard[this.heroPos].x,
-            -5 + this.logicBoard[this.heroPos].y
+            22 + this.logicBoard[boardTile].x,
+            -5 + this.logicBoard[boardTile].y
         );
-    },
+    },    
     
     incrementIdxTest: function() {
         this.idxTest ++;
@@ -166,16 +204,20 @@ Trivial.Game.prototype = {
     },
 
     onBtnPress: function(btn) {
-        console.log(btn);
         if (btn.key == "btn_white") {
-            this.updateHeroPos(this.tgt2);
-            this.dice = this.rnd.between(1,6);
-            this.calculateTargets();
+            //this.updateHeroPos(this.tgt2);
+            this.heroTarget = this.tgt2;
+            //this.dice = this.rnd.between(1,6);
+            //this.calculateTargetsFor(this.tgt2);
         } else if (btn.key == "btn_blue") {
-            this.updateHeroPos(this.tgt1);
-            this.dice = this.rnd.between(1,6);
-            this.calculateTargets();
+            //this.updateHeroPos(this.tgt1);
+            this.heroTarget = this.tgt1;
+            //this.dice = this.rnd.between(1,6);
+            //this.calculateTargetsFor(this.tgt1);
         }
+        this.heroMoving = true;
+        this.blinkTimer.pause();
+        this.clearBlinks();
     },
     
     onTileOverlap: function(img) {
@@ -184,8 +226,8 @@ Trivial.Game.prototype = {
     },
     
     toggleDebug: function () {
+        this.game.debug.reset();
         this.showDebug = this.showDebug ? false : true;
-        console.log("toggleDebug:", this.showDebug);
     },
     
     updateHeroPos: function(newPos) {

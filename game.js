@@ -34,6 +34,8 @@ Trivial.Game = function () {
     this.heroPos = 3;
     this.heroTarget = 0;
     this.heroMoving = false;
+    this.route1 = [];
+    this.route2 = [];
     
     this.dice = null;
     this.boardTiles = null;
@@ -62,6 +64,7 @@ Trivial.Game.prototype = {
         // board
         this.boardTiles = this.add.group();
         this.logicBoard = [];
+        this.boardList = new Phaser.ArraySet();
         for (var q=0;q<8;q++) {
             var type = (q == 7)?1:(q>0)?4:0;
             var tile = this.add.sprite(q*45, 100, "casillas", type*4, this.boardTiles);
@@ -70,6 +73,7 @@ Trivial.Game.prototype = {
             this.game.physics.arcade.enable(tile);
             tile.body.height = 33;
             this.logicBoard.push(tile);
+            this.boardList.add(tile);
         }
         for (q=0;q<6;q++) {
             tile = this.add.sprite(7*45, 134+(q*34), "casillas", 16, this.boardTiles);
@@ -78,6 +82,7 @@ Trivial.Game.prototype = {
             this.game.physics.arcade.enable(tile);
             tile.body.height = 33;
             this.logicBoard.push(tile);
+            this.boardList.add(tile);
         }
         for (q=8;q--;) {
             type = (q == 7)?2:(q>0)?4:3;
@@ -87,6 +92,7 @@ Trivial.Game.prototype = {
             this.game.physics.arcade.enable(tile);
             tile.body.height = 33;
             this.logicBoard.push(tile);
+            this.boardList.add(tile);
         }
         for (q=6;q--;) {
             tile = this.add.sprite(0, 134+(q*34), "casillas", 16, this.boardTiles);
@@ -95,8 +101,9 @@ Trivial.Game.prototype = {
             this.game.physics.arcade.enable(tile);
             tile.body.height = 33;
             this.logicBoard.push(tile);
-        } 
-
+            this.boardList.add(tile);
+        }
+        
         // hero
         this.heroPos = this.rnd.between(0, this.logicBoard.length-1);
         console.log(this.heroPos, Math.floor(this.heroPos/7));
@@ -129,38 +136,15 @@ Trivial.Game.prototype = {
     update: function () {
         this.boardTiles.sort('y', Phaser.Group.SORT_ASCENDING);
         
+        // to-do: eliminar este bucle tan exigente
         this.boardTiles.forEach(function(t) {
             if (!t.blinking) t.frame = t.initialFrame;
         }, this);
+        // to-do: eliminar este bucle tan exigente        
         this.game.physics.arcade.overlap(this.hero, this.boardTiles, this.heroOverlapsTile, null, this);
         
         if (this.heroMoving) {            
-            /*var tgtX = this.getPosForTile(this.heroTarget).x - 20;
-            var tgtY = this.getPosForTile(this.heroTarget).y + 5;
-            var nearX = this.math.fuzzyEqual(tgtX, this.hero.x, 6);
-            var nearY = this.math.fuzzyEqual(tgtY, this.hero.y, 6);
-            if (nearX && nearY) {
-                this.heroMoving = false;
-                this.hero.body.velocity.x = 0;
-                this.hero.body.velocity.y = 0;
-                this.hero.x = tgtX;
-                this.hero.y = tgtY;
-                this.heroPos = this.heroTarget;
-                this.blinkTimer.resume();
-                this.dice = this.rnd.between(1, 6);
-                this.calculateTargetsFor(this.heroPos);
-            } else {
-                if (this.math.fuzzyGreaterThan(this.hero.x, tgtX, 6)) {
-                    this.hero.body.velocity.x = -this.HERO_VEL;
-                } else if (this.math.fuzzyGreaterThan(tgtX, this.hero.x, 6)) {
-                    this.hero.body.velocity.x = this.HERO_VEL;
-                }
-                if (this.math.fuzzyGreaterThan(tgtY, this.hero.y, 6)) {
-                    this.hero.body.velocity.y = this.HERO_VEL;
-                } else if (this.math.fuzzyGreaterThan(this.hero.y, tgtY, 6)) {
-                    this.hero.body.velocity.y = -this.HERO_VEL;
-                }                    
-            } */           
+          
         }
     },
 
@@ -193,11 +177,30 @@ Trivial.Game.prototype = {
         }
     },
     
-    calculateTargetsFor: function(tgt) {
-        this.tgt2 = tgt - this.dice;
-        if (this.tgt2 < 0) this.tgt2 = this.logicBoard.length + this.tgt2;
-        this.tgt1 = tgt + this.dice;
-        if (this.tgt1 >= this.logicBoard.length) this.tgt1 = this.tgt1 - this.logicBoard.length;
+    calculateTargetsFor: function(currPos) {
+        this.tgt2 = currPos - this.dice;
+        this.route2 = [];
+        if (this.tgt2 < 0) {
+            this.tgt2 = this.logicBoard.length + this.tgt2;
+            if (currPos > 0) this.route2.push(0);
+        } else {
+            if (this.tgt2 < 7 && currPos > 7) this.route2.push(7);
+            if (this.tgt2 < 14 && currPos > 14) this.route2.push(14);
+            if (this.tgt2 < 21 && currPos > 21) this.route2.push(21);
+        }
+        this.route2.push(this.tgt2);
+        
+        this.tgt1 = currPos + this.dice;
+        this.route1 = [];
+        if (this.tgt1 >= this.logicBoard.length) {
+            this.tgt1 = this.tgt1 - this.logicBoard.length;
+            if (currPos > 21) this.route1.push(0);
+        } else {
+            if (this.tgt1 > 7 && currPos < 7) this.route1.push(7);
+            if (this.tgt1 > 14 && currPos < 14) this.route1.push(14);
+            if (this.tgt1 > 21 && currPos < 21) this.route1.push(21);
+        }
+        this.route1.push(this.tgt1);
         
         this.clearBlinks();
         this.logicBoard[this.tgt1].blinking = "left";
@@ -249,15 +252,16 @@ Trivial.Game.prototype = {
         if (btn.key == "btn_white") {
             //this.updateHeroPos(this.tgt2);
             this.heroTarget = this.tgt2;
+            this.tweenHero(false, this.dice);
             this.dice = this.rnd.between(1,6);
             this.calculateTargetsFor(this.tgt2);
         } else if (btn.key == "btn_blue") {
             //this.updateHeroPos(this.tgt1);
             this.heroTarget = this.tgt1;
+            this.tweenHero(true, this.dice);
             this.dice = this.rnd.between(1,6);
             this.calculateTargetsFor(this.tgt1);
         }
-        this.tweenHero();
         this.heroMoving = true;
         this.blinkTimer.pause();
         this.clearBlinks();
@@ -268,91 +272,29 @@ Trivial.Game.prototype = {
         console.log(img.overlap(this.hero));
     },
     
-    tweenHero: function() {
-        var currentZone = Math.floor(this.heroPos/7);
-        var targetZone = Math.floor(this.heroTarget/7);
-        var tween1, tween2;
-        var tilesToCorner, fromCornerToTarget = 0;
-        var route = [];
-        if (currentZone == 0 || currentZone == 2) {
-            if (currentZone == 0) {
-                if (this.heroTarget > this.heroPos && this.heroTarget < 21) {
-                    tilesToCorner = Math.abs(7-this.heroPos);
-                    fromCornerToTarget = Math.abs(7-this.heroTarget);
-                    route.push(this.getPosForTile(7));
-                } else {
-                    tilesToCorner = this.heroPos;
-                    fromCornerToTarget = Math.abs(24-this.heroTarget);
-                    route.push(this.getPosForTile(0));
-                }
-            } else {
-                if (this.heroTarget > this.heroPos) {
-                    tilesToCorner = Math.abs(21-this.heroPos);
-                    fromCornerToTarget = Math.abs(this.heroTarget-21);
-                    route.push(this.getPosForTile(21));
-                } else {
-                    tilesToCorner = Math.abs(14-this.heroPos);
-                    fromCornerToTarget = Math.abs(this.heroTarget-14);
-                    route.push(this.getPosForTile(14));
-                }
-            }   
-            if (Math.abs(this.heroTarget-this.heroPos) <= tilesToCorner) {
-                tilesToCorner = Math.abs(this.heroTarget-this.heroPos);
-                fromCornerToTarget = 0;                
-                route = [];
-            }
-            route.push(this.getPosForTile(this.heroTarget));
-        } else {
-            if (currentZone == 1) {
-                if (this.heroTarget > this.heroPos) {
-                    tilesToCorner = Math.abs(14-this.heroPos);
-                    fromCornerToTarget = Math.abs(this.heroTarget-14);
-                    route.push(this.getPosForTile(14));
-                } else {
-                    tilesToCorner = Math.abs(7-this.heroPos);
-                    fromCornerToTarget = Math.abs(this.heroTarget-7);
-                    route.push(this.getPosForTile(7));
-                }
-            } else {
-                if (this.heroTarget > this.heroPos || this.heroTarget < 7) {
-                    tilesToCorner = Math.abs(28-this.heroPos);
-                    fromCornerToTarget = this.heroTarget;
-                    route.push(this.getPosForTile(0));
-                } else {
-                    tilesToCorner = Math.abs(21-this.heroPos);
-                    fromCornerToTarget = Math.abs(this.heroTarget-21);
-                    route.push(this.getPosForTile(21));
-                }
-            }   
-            if (Math.abs(this.heroTarget-this.heroPos) <= tilesToCorner) {
-                tilesToCorner = Math.abs(this.heroTarget-this.heroPos);
-                fromCornerToTarget = 0;
-                route = [];
-            }
-            route.push(this.getPosForTile(this.heroTarget));
-        }
-        console.log("to corner:", tilesToCorner, "to target:", fromCornerToTarget);
+    tweenHero: function(clockwise, distance) {
+        var route = clockwise ? this.route1 : this.route2;
         console.log(route);
-        var dest1 = route.shift();
+        var dest1 = this.getPosForTile(route.shift());
         tween1 = this.add.tween(this.hero).to(
             {
                 x: dest1.x,
                 y: dest1.y,
             }, 
-            this.HERO_VEL*(tilesToCorner),
+            this.HERO_VEL * distance,
             null,
             true
         );
         tween1.onComplete.addOnce(function() {
             console.log("complete tween ONE!", arguments);
             if (route.length) {
-                var dest2 = route.shift();
+                var dest2 = this.getPosForTile(route.shift());
                 tween2 = this.add.tween(this.hero).to(
                     {
                         x: dest2.x,
                         y: dest2.y
                     }, 
-                    this.HERO_VEL*(fromCornerToTarget),
+                    this.HERO_VEL * distance,
                     null,
                     true
                 );

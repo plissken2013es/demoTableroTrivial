@@ -34,8 +34,8 @@ Trivial.Game = function () {
     this.heroPos = 3;
     this.heroTarget = 0;
     this.heroMoving = false;
-    this.route1 = [];
-    this.route2 = [];
+    this.route1 = {route: [], dist: []};
+    this.route2 = {route: [], dist: []};
     
     this.dice = null;
     this.boardTiles = null;
@@ -179,32 +179,69 @@ Trivial.Game.prototype = {
     
     calculateTargetsFor: function(currPos) {
         this.tgt2 = currPos - this.dice;
-        this.route2 = [];
+        this.route2.route = [];
+        this.route2.dist = [];
         if (this.tgt2 < 0) {
             this.tgt2 = this.logicBoard.length + this.tgt2;
-            if (currPos > 0) this.route2.push(0);
+            if (currPos > 0) {
+                this.route2.route.push(0);
+                this.route2.dist.push(currPos);
+                this.route2.dist.push(Math.abs(this.tgt2-this.logicBoard.length));
+            }
         } else {
-            if (this.tgt2 < 7 && currPos > 7) this.route2.push(7);
-            if (this.tgt2 < 14 && currPos > 14) this.route2.push(14);
-            if (this.tgt2 < 21 && currPos > 21) this.route2.push(21);
+            if (this.tgt2 < 7 && currPos > 7) {
+                this.route2.route.push(7);
+                this.route2.dist.push(currPos-7);
+                this.route2.dist.push(Math.abs(this.tgt2-7));
+            }
+            if (this.tgt2 < 14 && currPos > 14) {
+                this.route2.route.push(14);
+                this.route2.dist.push(currPos-14);
+                this.route2.dist.push(Math.abs(this.tgt2-14));
+            }
+            if (this.tgt2 < 21 && currPos > 21) {
+                this.route2.route.push(21);
+                this.route2.dist.push(currPos-21);
+                this.route2.dist.push(Math.abs(this.tgt2-21));
+            }
         }
-        this.route2.push(this.tgt2);
+        this.route2.route.push(this.tgt2);
         
         this.tgt1 = currPos + this.dice;
-        this.route1 = [];
+        this.route1.route = [];
+        this.route1.dist = [];
         if (this.tgt1 >= this.logicBoard.length) {
             this.tgt1 = this.tgt1 - this.logicBoard.length;
-            if (currPos > 21) this.route1.push(0);
+            if (currPos > 21) {
+                this.route1.route.push(0);
+                this.route1.dist.push(Math.abs(currPos-this.logicBoard.length));
+                this.route1.dist.push(this.tgt1);
+            }
         } else {
-            if (this.tgt1 > 7 && currPos < 7) this.route1.push(7);
-            if (this.tgt1 > 14 && currPos < 14) this.route1.push(14);
-            if (this.tgt1 > 21 && currPos < 21) this.route1.push(21);
+            if (this.tgt1 > 7 && currPos < 7) {
+                this.route1.route.push(7);
+                this.route1.dist.push(7-currPos);
+                this.route1.dist.push(this.tgt2-7);
+            }
+            if (this.tgt1 > 14 && currPos < 14) {
+                this.route1.route.push(14);
+                this.route1.dist.push(14-currPos);
+                this.route1.dist.push(this.tgt2-14);
+            }
+            if (this.tgt1 > 21 && currPos < 21) {
+                this.route1.route.push(21);
+                this.route1.dist.push(21-currPos);
+                this.route1.dist.push(this.tgt2-21);
+            }
         }
-        this.route1.push(this.tgt1);
+        this.route1.route.push(this.tgt1);
         
         this.clearBlinks();
         this.logicBoard[this.tgt1].blinking = "left";
         this.logicBoard[this.tgt2].blinking = "right";
+        
+        console.log("r1:", this.route1);
+        console.log("r2:", this.route2);
     },
     
     clearBlinks: function() {
@@ -252,13 +289,13 @@ Trivial.Game.prototype = {
         if (btn.key == "btn_white") {
             //this.updateHeroPos(this.tgt2);
             this.heroTarget = this.tgt2;
-            this.tweenHero(false, this.dice);
+            this.tweenHero(false);
             this.dice = this.rnd.between(1,6);
             this.calculateTargetsFor(this.tgt2);
         } else if (btn.key == "btn_blue") {
             //this.updateHeroPos(this.tgt1);
             this.heroTarget = this.tgt1;
-            this.tweenHero(true, this.dice);
+            this.tweenHero(true);
             this.dice = this.rnd.between(1,6);
             this.calculateTargetsFor(this.tgt1);
         }
@@ -272,29 +309,31 @@ Trivial.Game.prototype = {
         console.log(img.overlap(this.hero));
     },
     
-    tweenHero: function(clockwise, distance) {
+    tweenHero: function(clockwise) {
         var route = clockwise ? this.route1 : this.route2;
         console.log(route);
-        var dest1 = this.getPosForTile(route.shift());
+        var dest1 = this.getPosForTile(route.route.shift());
+        var distance1 = route.dist.shift();
         tween1 = this.add.tween(this.hero).to(
             {
                 x: dest1.x,
                 y: dest1.y,
             }, 
-            this.HERO_VEL * distance,
+            this.HERO_VEL * distance1,
             null,
             true
         );
         tween1.onComplete.addOnce(function() {
             console.log("complete tween ONE!", arguments);
-            if (route.length) {
-                var dest2 = this.getPosForTile(route.shift());
+            if (route.route.length) {
+                var dest2 = this.getPosForTile(route.route.shift());
+                var distance2 = route.dist.shift();
                 tween2 = this.add.tween(this.hero).to(
                     {
                         x: dest2.x,
                         y: dest2.y
                     }, 
-                    this.HERO_VEL * distance,
+                    this.HERO_VEL * distance2,
                     null,
                     true
                 );

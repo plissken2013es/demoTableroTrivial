@@ -187,23 +187,30 @@ Trivial.Game.prototype = {
                 this.route2.route.push(0);
                 this.route2.dist.push(currPos);
                 this.route2.dist.push(Math.abs(this.tgt2-this.logicBoard.length));
+            } else {
+                this.route2.dist.push(this.dice);                
             }
         } else {
+            var corner2 = false;
             if (this.tgt2 < 7 && currPos > 7) {
                 this.route2.route.push(7);
                 this.route2.dist.push(currPos-7);
                 this.route2.dist.push(Math.abs(this.tgt2-7));
+                corner2 = true;
             }
             if (this.tgt2 < 14 && currPos > 14) {
                 this.route2.route.push(14);
                 this.route2.dist.push(currPos-14);
                 this.route2.dist.push(Math.abs(this.tgt2-14));
+                corner2 = true;
             }
             if (this.tgt2 < 21 && currPos > 21) {
                 this.route2.route.push(21);
                 this.route2.dist.push(currPos-21);
                 this.route2.dist.push(Math.abs(this.tgt2-21));
+                corner2 = true;
             }
+            if (!corner2) this.route2.dist.push(this.dice);
         }
         this.route2.route.push(this.tgt2);
         
@@ -216,23 +223,30 @@ Trivial.Game.prototype = {
                 this.route1.route.push(0);
                 this.route1.dist.push(Math.abs(currPos-this.logicBoard.length));
                 this.route1.dist.push(this.tgt1);
+            } else {
+                this.route1.dist.push(this.dice);                
             }
         } else {
+            var corner1 = false;
             if (this.tgt1 > 7 && currPos < 7) {
                 this.route1.route.push(7);
                 this.route1.dist.push(7-currPos);
-                this.route1.dist.push(this.tgt2-7);
+                this.route1.dist.push(Math.abs(this.tgt1-7));
+                corner1 = true;
             }
             if (this.tgt1 > 14 && currPos < 14) {
                 this.route1.route.push(14);
                 this.route1.dist.push(14-currPos);
-                this.route1.dist.push(this.tgt2-14);
+                this.route1.dist.push(Math.abs(this.tgt1-14));
+                corner1 = true;
             }
             if (this.tgt1 > 21 && currPos < 21) {
                 this.route1.route.push(21);
                 this.route1.dist.push(21-currPos);
-                this.route1.dist.push(this.tgt2-21);
+                this.route1.dist.push(Math.abs(this.tgt1-21));
+                corner1 = true;
             }
+            if (!corner1) this.route1.dist.push(this.dice);
         }
         this.route1.route.push(this.tgt1);
         
@@ -250,6 +264,13 @@ Trivial.Game.prototype = {
             delete t.blinking;
         }, this);
     },
+
+    discoverTile: function(which) {
+        var tileValue = this.BOARD[which];
+        if (tileValue > 0) {
+            this.logicBoard[which].initialFrame = (4+tileValue)*4;
+        }
+    },
     
     doBlinkTiles: function() {
         this.blinkValue = this.blinkValue ? false : true;
@@ -259,12 +280,10 @@ Trivial.Game.prototype = {
     endHeroMovement: function() {
         this.heroMoving = false;
         this.updateHeroPos(this.heroTarget);
+        this.dice = this.rnd.between(1, 6);
+        console.log("launched dice: ", this.dice);
         this.calculateTargetsFor(this.heroPos);
         this.blinkTimer.resume();
-        var tileValue = this.BOARD[this.heroPos];
-        if (tileValue > 0) {
-            this.logicBoard[this.heroPos].initialFrame = (4+tileValue)*4;
-        }
     },
     
     getPosForTile: function(boardTile) {
@@ -286,18 +305,14 @@ Trivial.Game.prototype = {
     onBtnPress: function(btn) {
         console.log(this.heroMoving);
         if (this.heroMoving) return;
-        if (btn.key == "btn_white") {
-            //this.updateHeroPos(this.tgt2);
+        if (btn.key == "btn_blue") {
             this.heroTarget = this.tgt2;
+            this.discoverTile(this.heroTarget);
             this.tweenHero(false);
-            this.dice = this.rnd.between(1,6);
-            this.calculateTargetsFor(this.tgt2);
-        } else if (btn.key == "btn_blue") {
-            //this.updateHeroPos(this.tgt1);
+        } else if (btn.key == "btn_white") {
             this.heroTarget = this.tgt1;
+            this.discoverTile(this.heroTarget);
             this.tweenHero(true);
-            this.dice = this.rnd.between(1,6);
-            this.calculateTargetsFor(this.tgt1);
         }
         this.heroMoving = true;
         this.blinkTimer.pause();
@@ -311,9 +326,10 @@ Trivial.Game.prototype = {
     
     tweenHero: function(clockwise) {
         var route = clockwise ? this.route1 : this.route2;
-        console.log(route);
-        var dest1 = this.getPosForTile(route.route.shift());
+        var tile1 = route.route.shift();
+        var dest1 = this.getPosForTile(tile1);
         var distance1 = route.dist.shift();
+        console.log("going to:", tile1, dest1, distance1);
         tween1 = this.add.tween(this.hero).to(
             {
                 x: dest1.x,
@@ -326,8 +342,10 @@ Trivial.Game.prototype = {
         tween1.onComplete.addOnce(function() {
             console.log("complete tween ONE!", arguments);
             if (route.route.length) {
-                var dest2 = this.getPosForTile(route.route.shift());
+                var tile2 = route.route.shift();
+                var dest2 = this.getPosForTile(tile2);
                 var distance2 = route.dist.shift();
+                console.log("now going to:", tile2, dest2, distance2);
                 tween2 = this.add.tween(this.hero).to(
                     {
                         x: dest2.x,

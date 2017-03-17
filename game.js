@@ -13,6 +13,11 @@ Trivial.Preloader.prototype = {
     },
 
     preload: function () {
+        //  Load the Google WebFont Loader script
+        this.load.script('webfont', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js');
+        
+        this.load.json("questions", "/db/preguntas.json");
+        
         this.load.path = 'assets/';
         this.load.image("hero", "astro.png");
         this.load.images(["btn_white", "btn_blue"]);
@@ -67,6 +72,10 @@ Trivial.Game.prototype = {
     create: function () {
         this.stage.backgroundColor = 0x000000;
         this.game.physics.startSystem(Phaser.Physics.ARCADE);
+        
+        // questions
+        this.questions = this.cache.getJSON("questions").questions;
+        console.log("questions loaded:", this.questions);
 
         // board
         this.boardTiles = this.add.group();
@@ -163,6 +172,29 @@ Trivial.Game.prototype = {
                 this.game.debug.body(t, "#ffcc00", false);
             }, this);
         }
+    },
+    
+    askQuestion: function() {
+        var question = Phaser.ArrayUtils.shuffle(this.questions)[0];
+        var answer = question["answers"][0];
+        var options = Phaser.ArrayUtils.shuffle(question["answers"]);
+        var qText = question["text"];
+        console.log("Pregunta:", qText);
+        console.log("opciones:", options);
+        console.log("respuesta correcta: ", answer);
+        
+        var style = {
+            font: "Press Start 2P", 
+            fontSize: 9,
+            fill: "yellow",
+            stroke: "black",
+            strokeThickness: 0.2,
+            align: "center", 
+            wordWrap: true, 
+            wordWrapWidth: 240
+        };
+        var text = this.add.text(game.world.centerX, 150, qText, style);
+        text.anchor.setTo(0.5);
     },
     
     // custom methods
@@ -308,7 +340,8 @@ Trivial.Game.prototype = {
     endHeroMovement: function() {
         this.heroMoving = false;
         this.updateHeroPos(this.heroTarget);
-        this.launchDice();
+        this.askQuestion();
+        //this.launchDice();
     },
     
     getPosForTile: function(boardTile) {
@@ -434,3 +467,15 @@ game.state.add('Trivial.Game', Trivial.Game);
 
 game.state.start('Trivial.Preloader');
 
+//  The Google WebFont Loader will look for this object, so create it before loading the script.
+WebFontConfig = {
+    //  'active' means all requested fonts have finished loading
+    //  We set a 1 second delay before calling 'createText'.
+    //  For some reason if we don't the browser cannot render the text the first time it's created.
+    active: function() {console.warn("google fonts loaded!");},
+
+    //  The Google Fonts we want to load (specify as many as you like in the array)
+    google: {
+      families: ['Press Start 2P']
+    }
+};

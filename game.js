@@ -18,6 +18,7 @@ Trivial.Preloader.prototype = {
         this.load.images(["btn_white", "btn_blue"]);
         this.load.spritesheet('casillas', 'casillas.png', 45, 45);
         this.load.spritesheet('efecto', 'uncover_tile.png', 45, 45);
+        this.load.spritesheet("dado", "dice.png", 64, 64);
     },
 
     create: function () {
@@ -131,10 +132,7 @@ Trivial.Game.prototype = {
         console.log(this.btnBlue);
         
         // launch sample dice
-        this.dice = this.rnd.between(1, 6);
-        console.log("launched dice: ", this.dice);
-        //mark the two available targets
-        this.calculateTargetsFor(this.heroPos);
+        this.launchDice();
 
         //  Press D to toggle the debug display
         this.debugKey = this.input.keyboard.addKey(Phaser.Keyboard.D);
@@ -310,10 +308,7 @@ Trivial.Game.prototype = {
     endHeroMovement: function() {
         this.heroMoving = false;
         this.updateHeroPos(this.heroTarget);
-        this.dice = this.rnd.between(1, 6);
-        console.log("launched dice: ", this.dice);
-        this.calculateTargetsFor(this.heroPos);
-        this.blinkTimer.resume();
+        this.launchDice();
     },
     
     getPosForTile: function(boardTile) {
@@ -330,6 +325,28 @@ Trivial.Game.prototype = {
     incrementIdxTest: function() {
         this.idxTest ++;
         this.idxTest = (this.idxTest < this.logicBoard.length) ? this.idxTest : 0;
+    },
+    
+    launchDice: function() {
+        this.dice = this.rnd.between(1, 6);
+        console.log("launched dice: ", this.dice);
+        
+        var anim = Phaser.ArrayUtils.shuffle([0,1,2,3,4,5,0,1,2,3,4,5]);
+        var roll = this.add.sprite(180, 460, "dado", 0, this.heroLayer);
+        roll.anchor.setTo(0.5);
+        roll.animations.add("end", [this.dice-1], 0);
+        roll.animations.add("roll", anim, 20).onComplete.addOnce(function(spr, ani) {
+            console.log("complete roll dice anim", spr, ani);
+            roll.animations.play("end");
+            this.markTargets();
+        }, this);
+        roll.animations.play("roll", null, false);
+    },
+    
+    markTargets: function() {
+        //mark the two available targets
+        this.calculateTargetsFor(this.heroPos);
+        this.blinkTimer.resume();
     },
 
     onBtnPress: function(btn) {

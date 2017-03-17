@@ -44,7 +44,7 @@ Trivial.Game = function () {
     this.hero = null;
     this.heroPos = 3;
     this.heroTarget = 0;
-    this.heroMoving = false;
+    this.lockKeys = true;
     this.route1 = {route: [], dist: []};
     this.route2 = {route: [], dist: []};
     
@@ -133,7 +133,7 @@ Trivial.Game.prototype = {
         this.hero.body.width = 30;
         this.hero.body.height = 10;
         this.hero.body.offset.setTo(10, 80);
-        this.heroMoving = false;
+        this.lockKeys = true;
         
         // buttons
         this.btnBlue = this.add.button(80, 370, "btn_blue", this.onBtnPress, this);
@@ -159,7 +159,7 @@ Trivial.Game.prototype = {
         // to-do: eliminar este bucle tan exigente        
         this.game.physics.arcade.overlap(this.hero, this.boardTiles, this.heroOverlapsTile, null, this);
         
-        if (this.heroMoving) {            
+        if (this.lockKeys) {            
           
         }
     },
@@ -187,7 +187,7 @@ Trivial.Game.prototype = {
             font: "Press Start 2P", 
             fontSize: 9,
             fill: "yellow",
-            stroke: "black",
+            stroke: "grey",
             strokeThickness: 0.2,
             align: "center", 
             wordWrap: true, 
@@ -338,7 +338,7 @@ Trivial.Game.prototype = {
     },
     
     endHeroMovement: function() {
-        this.heroMoving = false;
+        //this.lockKeys = false;
         this.updateHeroPos(this.heroTarget);
         this.askQuestion();
         //this.launchDice();
@@ -361,6 +361,8 @@ Trivial.Game.prototype = {
     },
     
     launchDice: function() {
+        this.lockKeys = true;
+        
         this.dice = this.rnd.between(1, 6);
         console.log("launched dice: ", this.dice);
         
@@ -380,11 +382,12 @@ Trivial.Game.prototype = {
         //mark the two available targets
         this.calculateTargetsFor(this.heroPos);
         this.blinkTimer.resume();
+        this.lockKeys = false;
     },
 
     onBtnPress: function(btn) {
-        console.log(this.heroMoving);
-        if (this.heroMoving) return;
+        console.log("lock keys:", this.lockKeys);
+        if (this.lockKeys) return;
         if (btn.key == "btn_blue") {
             this.heroTarget = this.tgt2;
             this.discoverTileAndTweenHero(this.heroTarget, false);
@@ -394,7 +397,7 @@ Trivial.Game.prototype = {
             this.discoverTileAndTweenHero(this.heroTarget, true);
             //this.tweenHero(true);
         }
-        this.heroMoving = true;
+        this.lockKeys = true;
         this.blinkTimer.pause();
         this.clearBlinks();
     },

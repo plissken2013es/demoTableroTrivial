@@ -136,8 +136,8 @@ Trivial.Game.prototype = {
         this.lockKeys = true;
         
         // buttons
-        this.btnBlue = this.add.button(80, 370, "btn_blue", this.onBtnPress, this);
-        this.btnWhite = this.add.button(180, 370, "btn_white", this.onBtnPress, this);
+        this.btnBlue = this.add.button(80, 370, "btn_blue", this.onButtonPress, this);
+        this.btnWhite = this.add.button(180, 370, "btn_white", this.onButtonPress, this);
         console.log(this.btnBlue);
         
         // launch sample dice
@@ -176,25 +176,28 @@ Trivial.Game.prototype = {
     
     askQuestion: function() {
         var question = Phaser.ArrayUtils.shuffle(this.questions)[0];
-        var answer = question["answers"][0];
-        var options = Phaser.ArrayUtils.shuffle(question["answers"]);
+        this.answer = question["answers"][0];
+        this.options = Phaser.ArrayUtils.shuffle(question["answers"]);
         var qText = question["text"];
         console.log("Pregunta:", qText);
-        console.log("opciones:", options);
-        console.log("respuesta correcta: ", answer);
+        console.log("opciones:", this.options);
+        console.log("respuesta correcta: ", this.answer);
         
         var style = {
             font: "Press Start 2P", 
             fontSize: 9,
             fill: "yellow",
             stroke: "grey",
-            strokeThickness: 0.2,
+            strokeThickness: 1,
             align: "center", 
             wordWrap: true, 
             wordWrapWidth: 240
         };
-        var text = this.add.text(game.world.centerX, 150, qText, style);
-        text.anchor.setTo(0.5);
+        this.questionText = this.add.text(game.world.centerX, 150, qText, style);
+        this.questionText.anchor.setTo(0.5);
+        
+        this.lockKeys = false;
+        this.printAnswer();
     },
     
     // custom methods
@@ -304,6 +307,15 @@ Trivial.Game.prototype = {
         }, this);
     },
     
+    clearTexts: function() {
+        if (this.questionText) this.questionText.destroy();
+        this.questionText = null;
+        if (this.answerText) this.answerText.destroy();
+        this.answerText = null;
+        if (this.resultText) this.resultText.destroy();
+        this.resultText = null;
+    },
+    
     createEffectAt: function(x, y) {
         var efecto = this.add.sprite(x, y, "efecto", 29, this.heroLayer);
         efecto.anchor.setTo(0.5, 1);
@@ -385,26 +397,114 @@ Trivial.Game.prototype = {
         this.lockKeys = false;
     },
 
-    onBtnPress: function(btn) {
+    onButtonPress: function(btn) {
         console.log("lock keys:", this.lockKeys);
         if (this.lockKeys) return;
-        if (btn.key == "btn_blue") {
-            this.heroTarget = this.tgt2;
-            this.discoverTileAndTweenHero(this.heroTarget, false);
-            //this.tweenHero(false);
-        } else if (btn.key == "btn_white") {
-            this.heroTarget = this.tgt1;
-            this.discoverTileAndTweenHero(this.heroTarget, true);
-            //this.tweenHero(true);
+        if (this.answerText) {
+            var isCorrect = this.answerText.text == this.answer;
+            var finished = false;
+            console.log("respuesta correcta?", this.answerText.text, this.answer, isCorrect);
+            if (btn.key == "btn_blue") {
+                if (isCorrect) {
+                    console.log("acertaste!");
+                    this.printCorrectAnswer();
+                    finished = true;
+                } else {
+                    console.log("fallaste: era ésta!");
+                    this.printWrongAnswer();
+                    finished = true;
+                }
+            } else if (btn.key == "btn_white") {
+                if (!isCorrect) {
+                    console.log("acertaste al negar la respuesta!");
+                    this.printAnswer();
+                } else {
+                    console.log("fallaste: era ésta!");
+                    this.printWrongAnswer();
+                    finished = true;
+                }
+            }
+            
+            if (finished) {
+                this.lockKeys = true;
+                var pauseTime = this.time.create(true);
+                pauseTime.add(2500, function() {
+                    this.clearTexts();
+                    this.launchDice();
+                }, this);  
+                pauseTime.start();
+            }
+        } else {
+            if (btn.key == "btn_blue") {
+                this.heroTarget = this.tgt2;
+                this.discoverTileAndTweenHero(this.heroTarget, false);
+                //this.tweenHero(false);
+            } else if (btn.key == "btn_white") {
+                this.heroTarget = this.tgt1;
+                this.discoverTileAndTweenHero(this.heroTarget, true);
+                //this.tweenHero(true);
+            }
+            this.lockKeys = true;
+            this.blinkTimer.pause();
+            this.clearBlinks();
         }
-        this.lockKeys = true;
-        this.blinkTimer.pause();
-        this.clearBlinks();
     },
     
     onTileOverlap: function(img) {
         console.log(arguments);
         console.log(img.overlap(this.hero));
+    },
+    
+    printAnswer: function() {
+        if (this.options.length) {
+            this.currentAnswer = this.options.pop();
+            var style = {
+                font: "Press Start 2P", 
+                fontSize: 9,
+                fill: "white",
+                align: "center", 
+                wordWrap: true, 
+                wordWrapWidth: 240
+            };
+            if (this.answerText) this.answerText.destroy();
+            this.answerText = this.add.text(game.world.centerX, 210, this.currentAnswer, style);
+            this.answerText.anchor.setTo(0.5);
+        } else {
+            console.error("this.options se ha quedado vacío!!");
+        }
+    },
+    
+    printCorrectAnswer: function() {
+        var style = {
+            font: "Press Start 2P", 
+            fontSize: 9,
+            fill: "orange",
+            align: "center", 
+            wordWrap: true, 
+            wordWrapWidth: 240
+        };
+        if (this.resultText) this.resultText.destroy();
+        this.resultText = this.add.text(game.world.centerX, 270, "Muy bien, continúa así", style);
+        this.resultText.anchor.setTo(0.5);
+    },
+    
+    printWrongAnswer: function() {
+        var style = {
+            font: "Press Start 2P", 
+            fontSize: 9,
+            fill: "red",
+            align: "center", 
+            wordWrap: true, 
+            wordWrapWidth: 240
+        };
+        if (this.answerText) this.answerText.destroy();
+        this.answerText = this.add.text(game.world.centerX, 210, "Lo siento, la respuesta correcta era " + this.answer, style);
+        this.answerText.anchor.setTo(0.5);
+        
+        style.fill = "orange";
+        if (this.resultText) this.resultText.destroy();
+        this.resultText = this.add.text(game.world.centerX, 270, "La próxima vez lo sabrás", style);
+        this.resultText.anchor.setTo(0.5);
     },
     
     tweenHero: function(clockwise) {

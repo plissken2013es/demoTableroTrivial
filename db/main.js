@@ -78,6 +78,7 @@ function printCurrentQuestion() {
     answer1.value = q.answers[1];
     answer2.value = q.answers[2];
     answer3.value = q.answers[3];
+    setCategoryColor();
 }
 
 function saveToLocalStorage() {
@@ -95,6 +96,7 @@ function saveToRam() {
         if (item.id == "text" || item.id == "category") {
             if (!isNaN(parseInt(item.value))) {
                 questions[index][item.id] = parseInt(item.value);
+                setCategoryColor();
             } else {
                 questions[index][item.id] = item.value;
             }
@@ -103,6 +105,36 @@ function saveToRam() {
             questions[index].answers[id] = item.value;
         }
     });
+}
+
+/*
+Libro - "Últimas noticias" - ROJO -> "Ratón de biblioteca"
+- Historia
+- Literatura
+- Cómics
+
+Globo terráqueo y Letras - "Escenario y pantalla" - VERDE -> "Pegado a la pantalla"
+- Televisión / publicidad
+- Cine
+- Artistas
+
+Tubo ensayo y Araña - "Gente y recuerdos" - NARANJA -> "Todo el mundo es bueno" / "La gente es gente" / "¡Que viva la gente!"
+- Música
+- Sociedad ¿?
+- Personajes públicos
+
+Caretas teatro y Bate béisbol - "Días de colegio" - AZUL - > "Yo no fui a EGB"
+- "Ciencias sociales" / Políticas, el himno de un país ¿?
+- Geografía
+- Ciencias naturales / biología
+- Invenciones
+- Religión / biblia
+- Cultura general...
+*/
+
+function setCategoryColor() {
+    var catCols = ["red", "green", "orange", "blue"];
+    text.style.backgroundColor =  catCols[cat.value] || "grey";
 }
 
 function init() {

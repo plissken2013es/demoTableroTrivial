@@ -193,3 +193,8 @@ input[type=button] {
 #result {
     display: none;
 }
+
+#text {
+    font-weight: bold;
+    color: white;
+}

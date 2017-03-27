@@ -35,11 +35,12 @@ Trivial.Game = function () {
     this.BLINK_TIME = 250;
     this.HERO_VEL   = 250;
     this.BOARD = [
-        0, 1, 2, 3, 4, 1, 2,
-        0, 2, 3, 4, 2, 3, 4,
-        0, 4, 3, 1, 4, 2, 3,
-        0, 3, 1, 4, 3, 2, 1
+        2, 1, 2, 3, 4, 1, 2,
+        3, 2, 3, 4, 2, 3, 4,
+        1, 4, 3, 1, 4, 2, 3,
+        1, 3, 1, 4, 3, 2, 1
     ];
+    this.CATEGORIES = ["Ratón de biblioteca", "Pegado a la pantalla", "¡Que viva la gente!", "Yo no fui a EGB"];
     
     this.hero = null;
     this.heroPos = 3;
@@ -76,6 +77,16 @@ Trivial.Game.prototype = {
         // questions
         this.questions = this.cache.getJSON("questions").questions;
         console.log("questions loaded:", this.questions);
+        this.questionsByCategory = {
+            "0": [],
+            "1": [],
+            "2": [],
+            "3": []
+        };
+        console.log(this.questionsByCategory);
+        this.questions.forEach(function(item, i) {
+            this.questionsByCategory[item.category].push(item);
+        }, this);
 
         // board
         this.boardTiles = this.add.group();
@@ -174,12 +185,17 @@ Trivial.Game.prototype = {
         }
     },
     
-    askQuestion: function() {
-        var question = Phaser.ArrayUtils.shuffle(this.questions)[0];
+    askQuestion: function(cat) {
+        cat = cat - 1;
+        console.log("category:", cat, !isNaN(cat), this.CATEGORIES[cat]);
+        console.log(this.questionsByCategory[cat].slice().length);
+        var freshCopy = !isNaN(cat) ? this.questionsByCategory[cat].slice() : this.questions.slice();
+        var question = Phaser.ArrayUtils.shuffle(freshCopy)[0];
         this.answer = question["answers"][0];
-        this.options = Phaser.ArrayUtils.shuffle(question["answers"]);
+        this.options = Phaser.ArrayUtils.shuffle(question["answers"].slice());
         var qText = question["text"];
         console.log("Pregunta:", qText);
+        console.log("Categoría:", cat, this.CATEGORIES[cat]);
         console.log("opciones:", this.options);
         console.log("respuesta correcta: ", this.answer);
         
@@ -195,6 +211,13 @@ Trivial.Game.prototype = {
         };
         this.questionText = this.add.text(game.world.centerX, 150, qText, style);
         this.questionText.anchor.setTo(0.5);
+        
+        if (!isNaN(cat)) {
+            style.fill = "white";
+            style.wordWrapWidth = 300;
+            this.categoryText = this.add.text(game.world.centerX, 40, "Categoría: " + this.CATEGORIES[cat], style);
+            this.categoryText.anchor.setTo(0.5);
+        }
         
         this.lockKeys = false;
         this.printAnswer();
@@ -314,6 +337,8 @@ Trivial.Game.prototype = {
         this.answerText = null;
         if (this.resultText) this.resultText.destroy();
         this.resultText = null;
+        if (this.categoryText) this.categoryText.destroy();
+        this.categoryText = null;
     },
     
     createEffectAt: function(x, y) {
@@ -325,7 +350,7 @@ Trivial.Game.prototype = {
 
     discoverTileAndTweenHero: function(which, tweenHeroDirection) {
         var tileValue = this.BOARD[which];
-        var isCornerTile = tileValue == 0||tileValue == 7||tileValue == 14||tileValue == 21;
+        var isCornerTile = which == 0||which == 7||which == 14||which == 21;
         
         if (isCornerTile || this.logicBoard[which].initialFrame == (4+tileValue)*4) {
             this.tweenHero(tweenHeroDirection);
@@ -352,7 +377,7 @@ Trivial.Game.prototype = {
     endHeroMovement: function() {
         //this.lockKeys = false;
         this.updateHeroPos(this.heroTarget);
-        this.askQuestion();
+        this.askQuestion(this.BOARD[this.heroTarget]);
         //this.launchDice();
     },
     

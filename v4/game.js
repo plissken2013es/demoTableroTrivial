@@ -24,6 +24,7 @@ Trivial.Preloader.prototype = {
         this.load.images(["btn_white", "btn_blue"]);
         this.load.spritesheet('casillas', 'casillas.png', 45, 45);
         this.load.spritesheet('efecto', 'uncover_tile.png', 45, 45);
+        this.load.spritesheet('walk', 'explorer_walk.png', 50, 60);
         this.load.spritesheet("dado", "dice.png", 64, 64);
     },
 
@@ -138,7 +139,9 @@ Trivial.Game.prototype = {
         console.log(this.heroPos, Math.floor(this.heroPos/7));
         var pos = this.getPosForTile(this.heroPos);
         this.heroTarget = this.heroPos;
-        this.hero = this.add.sprite(pos.x, pos.y, "hero", 0, this.heroLayer);
+        this.hero = this.add.sprite(pos.x, pos.y, "walk", 0, this.heroLayer);
+        this.hero.animations.add("walk_right", [0, 1, 2, 3, 4, 5, 6, 7], 15, true);
+        this.hero.animations.add("walk_up", [8, 9, 10, 11, 12, 13, 14, 15], 15, true);
         this.hero.anchor.setTo(0.5, 1);
         this.game.physics.arcade.enable(this.hero);
         this.hero.enableBody = true;
@@ -377,8 +380,13 @@ Trivial.Game.prototype = {
     
     endHeroMovement: function() {
         //this.lockKeys = false;
+        setTimeout(function() {
+            this.hero.animations.currentAnim.stop(0, true);
+            this.hero.frame = 0;
+        }.bind(this), 74);
         this.updateHeroPos(this.heroTarget);
         this.askQuestion(this.BOARD[this.heroTarget]);
+        //this.launchDice();
         //this.launchDice();
     },
     
@@ -548,6 +556,13 @@ Trivial.Game.prototype = {
             null,
             true
         );
+        if (this.hero.x == dest1.x) {
+            this.hero.animations.play("walk_up");
+        } else {
+            this.hero.animations.play("walk_right");
+        }
+        this.hero.scale.x = 1;
+        if (this.hero.x > dest1.x) this.hero.scale.x = -1;
         tween1.onComplete.addOnce(function() {
             console.log("complete tween ONE!", arguments);
             if (route.route.length) {
@@ -564,6 +579,11 @@ Trivial.Game.prototype = {
                     null,
                     true
                 );
+                if (this.hero.x == dest2.x) {
+                    this.hero.animations.play("walk_up");
+                } else {
+                    this.hero.animations.play("walk_right");
+                }
                 tween2.onComplete.addOnce(function() {
                     console.log("complete tween TWO!", arguments);
                     this.endHeroMovement();

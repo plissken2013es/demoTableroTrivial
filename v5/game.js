@@ -35,7 +35,7 @@ Trivial.Preloader.prototype = {
 
 Trivial.Game = function () {
     this.BLINK_TIME = 250;
-    this.HERO_VEL   = 250;
+    this.HERO_VEL   = 350;
     this.BOARD = [
         2, 1, 2, 3, 4, 1, 2,
         3, 2, 3, 4, 2, 3, 4,
@@ -140,14 +140,15 @@ Trivial.Game.prototype = {
         var pos = this.getPosForTile(this.heroPos);
         this.heroTarget = this.heroPos;
         this.hero = this.add.sprite(pos.x, pos.y, "walk", 0, this.heroLayer);
-        this.hero.animations.add("walk_right", [0, 1, 2, 3, 4, 5, 6, 7], 15, true);
-        this.hero.animations.add("walk_up", [8, 9, 10, 11, 12, 13, 14, 15], 15, true);
+        this.hero.animations.add("walk_right", [0, 1, 2, 3, 4, 5, 6, 7], 12, true);
+        this.hero.animations.add("walk_up", [8, 9, 10, 11, 12, 13, 14, 15], 12, true);
+        this.hero.animations.add("walk_down", [16, 17, 18, 19, 20, 21, 22, 23], 12, true);
         this.hero.anchor.setTo(0.5, 1);
         this.game.physics.arcade.enable(this.hero);
         this.hero.enableBody = true;
         this.hero.body.width = 30;
         this.hero.body.height = 10;
-        this.hero.body.offset.setTo(10, 80);
+        this.hero.body.offset.setTo(10, 50);
         this.lockKeys = true;
         
         // buttons
@@ -382,7 +383,7 @@ Trivial.Game.prototype = {
         //this.lockKeys = false;
         setTimeout(function() {
             this.hero.animations.currentAnim.stop(0, true);
-            this.hero.frame = 0;
+            this.hero.frame = 16;
         }.bind(this), 74);
         this.updateHeroPos(this.heroTarget);
         this.askQuestion(this.BOARD[this.heroTarget]);
@@ -486,7 +487,7 @@ Trivial.Game.prototype = {
     
     onTileOverlap: function(img) {
         console.log(arguments);
-        console.log(img.overlap(this.hero));
+        console.log("onTileOverlap", img.overlap(this.hero));
     },
     
     printAnswer: function() {
@@ -556,13 +557,21 @@ Trivial.Game.prototype = {
             null,
             true
         );
+        
+        // select anim - refactor
         if (this.hero.x == dest1.x) {
-            this.hero.animations.play("walk_up");
+            if (this.hero.y > dest1.y) {
+                this.hero.animations.play("walk_up");
+            } else {
+                this.hero.animations.play("walk_down");
+            }
         } else {
             this.hero.animations.play("walk_right");
         }
         this.hero.scale.x = 1;
         if (this.hero.x > dest1.x) this.hero.scale.x = -1;
+        // select anim - refactor
+        
         tween1.onComplete.addOnce(function() {
             console.log("complete tween ONE!", arguments);
             if (route.route.length) {
@@ -579,11 +588,21 @@ Trivial.Game.prototype = {
                     null,
                     true
                 );
+                
+                // select anim - refactor
                 if (this.hero.x == dest2.x) {
-                    this.hero.animations.play("walk_up");
+                    if (this.hero.y > dest2.y) {
+                        this.hero.animations.play("walk_up");
+                    } else {
+                        this.hero.animations.play("walk_down");
+                    }
                 } else {
                     this.hero.animations.play("walk_right");
                 }
+                this.hero.scale.x = 1;
+                if (this.hero.x > dest2.x) this.hero.scale.x = -1;
+                // select anim - refactor
+                
                 tween2.onComplete.addOnce(function() {
                     console.log("complete tween TWO!", arguments);
                     this.endHeroMovement();

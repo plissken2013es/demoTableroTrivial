@@ -152,8 +152,10 @@ function init() {
 }
 
 function cleanLoad() {
-    msg.style.display = "none";
-    loadJSON("preguntas.json", onLoadJSON);
+    if (window.confirm("¿Seguro que quieres cargar los datos del disco?")) {
+        msg.style.display = "none";
+        loadJSON("preguntas.json", onLoadJSON);
+    }
 }
 
 var questions, file, msg = document.getElementById("result");

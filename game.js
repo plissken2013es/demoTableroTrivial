@@ -21,9 +21,10 @@ Trivial.Preloader.prototype = {
         
         this.load.path = 'assets/';
         this.load.image("hero", "astro.png");
-        this.load.images(["btn_white", "btn_blue"]);
+        this.load.images(["btn_white", "btn_blue", "btn_one", "btn_two", "btn_three"]);
         this.load.spritesheet('casillas', 'casillas.png', 45, 45);
         this.load.spritesheet('efecto', 'uncover_tile.png', 45, 45);
+        this.load.spritesheet('walk', 'explorer_walk.png', 50, 60);
         this.load.spritesheet("dado", "dice.png", 64, 64);
     },
 
@@ -34,7 +35,8 @@ Trivial.Preloader.prototype = {
 
 Trivial.Game = function () {
     this.BLINK_TIME = 250;
-    this.HERO_VEL   = 250;
+    this.HERO_VEL   = 350;
+    this.HERO_FPS   = 12;
     this.BOARD = [
         2, 1, 2, 3, 4, 1, 2,
         3, 2, 3, 4, 2, 3, 4,
@@ -138,18 +140,24 @@ Trivial.Game.prototype = {
         console.log(this.heroPos, Math.floor(this.heroPos/7));
         var pos = this.getPosForTile(this.heroPos);
         this.heroTarget = this.heroPos;
-        this.hero = this.add.sprite(pos.x, pos.y, "hero", 0, this.heroLayer);
+        this.hero = this.add.sprite(pos.x, pos.y, "walk", 0, this.heroLayer);
+        this.hero.animations.add("walk_right", [0, 1, 2, 3, 4, 5, 6, 7], this.HERO_FPS, true);
+        this.hero.animations.add("walk_up", [8, 9, 10, 11, 12, 13, 14, 15], this.HERO_FPS, true);
+        this.hero.animations.add("walk_down", [16, 17, 18, 19, 20, 21, 22, 23], this.HERO_FPS, true);
         this.hero.anchor.setTo(0.5, 1);
         this.game.physics.arcade.enable(this.hero);
         this.hero.enableBody = true;
         this.hero.body.width = 30;
         this.hero.body.height = 10;
-        this.hero.body.offset.setTo(10, 80);
+        this.hero.body.offset.setTo(10, 50);
         this.lockKeys = true;
         
         // buttons
         this.btnBlue = this.add.button(80, 370, "btn_blue", this.onButtonPress, this);
         this.btnWhite = this.add.button(180, 370, "btn_white", this.onButtonPress, this);
+        this.btnOne = this.add.button(40, 400, "btn_one", this.onButtonPress, this);
+        this.btnTwo = this.add.button(140, 400, "btn_two", this.onButtonPress, this);
+        this.btnThree = this.add.button(240, 400, "btn_three", this.onButtonPress, this);
         console.log(this.btnBlue);
         
         // launch sample dice
@@ -377,8 +385,13 @@ Trivial.Game.prototype = {
     
     endHeroMovement: function() {
         //this.lockKeys = false;
+        setTimeout(function() {
+            this.hero.animations.currentAnim.stop(0, true);
+            this.hero.frame = 16;
+        }.bind(this), this.HERO_VEL/3);
         this.updateHeroPos(this.heroTarget);
         this.askQuestion(this.BOARD[this.heroTarget]);
+        //this.launchDice();
         //this.launchDice();
     },
     
@@ -460,7 +473,7 @@ Trivial.Game.prototype = {
                 }, this);  
                 pauseTime.start();
             }
-        } else {
+        } else if (btn.key == "btn_blue" || btn.key == "btn_white") {
             if (btn.key == "btn_blue") {
                 this.heroTarget = this.tgt2;
                 this.discoverTileAndTweenHero(this.heroTarget, false);
@@ -473,12 +486,30 @@ Trivial.Game.prototype = {
             this.lockKeys = true;
             this.blinkTimer.pause();
             this.clearBlinks();
+        } else {
+            var key = btn.key.split("btn_")[1];
+            switch (key) {
+                case "one":
+                    this.HERO_FPS = 8;
+                    this.HERO_VEL = 450;
+                    break;
+                    
+                case "two":
+                    this.HERO_FPS = 12;
+                    this.HERO_VEL = 350;
+                    break;
+                    
+                default:
+                    this.HERO_FPS = 15;
+                    this.HERO_VEL = 250;
+                    break;
+            }
         }
     },
     
     onTileOverlap: function(img) {
         console.log(arguments);
-        console.log(img.overlap(this.hero));
+        console.log("onTileOverlap", img.overlap(this.hero));
     },
     
     printAnswer: function() {
@@ -548,6 +579,21 @@ Trivial.Game.prototype = {
             null,
             true
         );
+        
+        // select anim - refactor
+        if (this.hero.x == dest1.x) {
+            if (this.hero.y > dest1.y) {
+                this.hero.animations.play("walk_up");
+            } else {
+                this.hero.animations.play("walk_down");
+            }
+        } else {
+            this.hero.animations.play("walk_right");
+        }
+        this.hero.scale.x = 1;
+        if (this.hero.x > dest1.x) this.hero.scale.x = -1;
+        // select anim - refactor
+        
         tween1.onComplete.addOnce(function() {
             console.log("complete tween ONE!", arguments);
             if (route.route.length) {
@@ -564,6 +610,21 @@ Trivial.Game.prototype = {
                     null,
                     true
                 );
+                
+                // select anim - refactor
+                if (this.hero.x == dest2.x) {
+                    if (this.hero.y > dest2.y) {
+                        this.hero.animations.play("walk_up");
+                    } else {
+                        this.hero.animations.play("walk_down");
+                    }
+                } else {
+                    this.hero.animations.play("walk_right");
+                }
+                this.hero.scale.x = 1;
+                if (this.hero.x > dest2.x) this.hero.scale.x = -1;
+                // select anim - refactor
+                
                 tween2.onComplete.addOnce(function() {
                     console.log("complete tween TWO!", arguments);
                     this.endHeroMovement();

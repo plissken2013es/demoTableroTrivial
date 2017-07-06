@@ -24,7 +24,7 @@ Trivial.Preloader.prototype = {
         this.load.images(["btn_white", "btn_blue", "btn_one", "btn_two", "btn_three"]);
         this.load.spritesheet('casillas', 'casillas.png', 45, 45);
         this.load.spritesheet('efecto', 'uncover_tile.png', 45, 45);
-        this.load.spritesheet('walk', 'explorer_walk.png', 50, 60);
+        this.load.spritesheet('explorer', 'explorer_sprite.png', 50, 60);
         this.load.spritesheet("dado", "dice.png", 64, 64);
     },
 
@@ -140,10 +140,11 @@ Trivial.Game.prototype = {
         console.log(this.heroPos, Math.floor(this.heroPos/7));
         var pos = this.getPosForTile(this.heroPos);
         this.heroTarget = this.heroPos;
-        this.hero = this.add.sprite(pos.x, pos.y, "walk", 0, this.heroLayer);
+        this.hero = this.add.sprite(pos.x, pos.y, "explorer", 0, this.heroLayer);
         this.hero.animations.add("walk_right", [0, 1, 2, 3, 4, 5, 6, 7], this.HERO_FPS, true);
         this.hero.animations.add("walk_up", [8, 9, 10, 11, 12, 13, 14, 15], this.HERO_FPS, true);
         this.hero.animations.add("walk_down", [16, 17, 18, 19, 20, 21, 22, 23], this.HERO_FPS, true);
+        this.hero.animations.add("idle", [24, 25, 26, 27, 28, 28, 29, 30, 31, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48], this.HERO_FPS, true);
         this.hero.anchor.setTo(0.5, 1);
         this.game.physics.arcade.enable(this.hero);
         this.hero.enableBody = true;
@@ -425,6 +426,7 @@ Trivial.Game.prototype = {
             console.log("complete roll dice anim", spr, ani);
             roll.animations.play("end");
             this.markTargets();
+            this.hero.animations.play("idle");
         }, this);
         roll.animations.play("roll", null, false);
     },

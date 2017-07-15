@@ -145,6 +145,7 @@ Trivial.Game.prototype = {
         this.hero.animations.add("walk_up", [8, 9, 10, 11, 12, 13, 14, 15], this.HERO_FPS, true);
         this.hero.animations.add("walk_down", [16, 17, 18, 19, 20, 21, 22, 23], this.HERO_FPS, true);
         this.hero.animations.add("idle", [24, 25, 26, 27, 28, 28, 29, 30, 31, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48], this.HERO_FPS, true);
+        this.hero.animations.add("anger", [49, 50, 51, 52, 53, 54], this.HERO_FPS, true);
         this.hero.anchor.setTo(0.5, 1);
         this.game.physics.arcade.enable(this.hero);
         this.hero.enableBody = true;
@@ -389,6 +390,12 @@ Trivial.Game.prototype = {
         setTimeout(function() {
             this.hero.animations.currentAnim.stop(0, true);
             this.hero.frame = 16;
+            this.hero.animations.play("idle");
+            if (this.heroTarget>=7 && this.heroTarget<=14) {
+                this.hero.scale.setTo(-1, 1);
+            } else {
+                this.hero.scale.setTo(1);
+            }
         }.bind(this), this.HERO_VEL/3);
         this.updateHeroPos(this.heroTarget);
         this.askQuestion(this.BOARD[this.heroTarget]);
@@ -452,6 +459,7 @@ Trivial.Game.prototype = {
                     finished = true;
                 } else {
                     console.log("fallaste: era ésta!");
+                    this.hero.animations.play("anger");
                     this.printWrongAnswer();
                     finished = true;
                 }
@@ -461,6 +469,7 @@ Trivial.Game.prototype = {
                     this.printAnswer();
                 } else {
                     console.log("fallaste: era ésta!");
+                    this.hero.animations.play("anger");
                     this.printWrongAnswer();
                     finished = true;
                 }
@@ -469,7 +478,7 @@ Trivial.Game.prototype = {
             if (finished) {
                 this.lockKeys = true;
                 var pauseTime = this.time.create(true);
-                pauseTime.add(2500, function() {
+                pauseTime.add(3000, function() {
                     this.clearTexts();
                     this.launchDice();
                 }, this);  

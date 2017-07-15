@@ -1,0 +1,64 @@
+{ "frames": {
+   "explorer_anim_fail 0.gif": {
+    "frame": { "x": 0, "y": 0, "w": 50, "h": 60 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 50, "h": 60 },
+    "sourceSize": { "w": 50, "h": 60 },
+    "duration": 100
+   },
+   "explorer_anim_fail 1.gif": {
+    "frame": { "x": 50, "y": 0, "w": 50, "h": 60 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 50, "h": 60 },
+    "sourceSize": { "w": 50, "h": 60 },
+    "duration": 100
+   },
+   "explorer_anim_fail 2.gif": {
+    "frame": { "x": 100, "y": 0, "w": 50, "h": 60 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 50, "h": 60 },
+    "sourceSize": { "w": 50, "h": 60 },
+    "duration": 100
+   },
+   "explorer_anim_fail 3.gif": {
+    "frame": { "x": 150, "y": 0, "w": 50, "h": 60 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 50, "h": 60 },
+    "sourceSize": { "w": 50, "h": 60 },
+    "duration": 100
+   },
+   "explorer_anim_fail 4.gif": {
+    "frame": { "x": 200, "y": 0, "w": 50, "h": 60 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 50, "h": 60 },
+    "sourceSize": { "w": 50, "h": 60 },
+    "duration": 100
+   },
+   "explorer_anim_fail 5.gif": {
+    "frame": { "x": 250, "y": 0, "w": 50, "h": 60 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 50, "h": 60 },
+    "sourceSize": { "w": 50, "h": 60 },
+    "duration": 100
+   }
+ },
+ "meta": {
+  "app": "http://www.aseprite.org/",
+  "version": "1.1.13",
+  "image": "C:\\_TRABAJOS\\_DEV\\_PROYECTOS\\03_TrivialPursuit\\_demo\\demo_gitHub\\assets\\explorer_anim_fail.png",
+  "format": "I8",
+  "size": { "w": 400, "h": 240 },
+  "scale": "1",
+  "frameTags": [
+  ],
+  "layers": [
+   { "name": "Layer", "opacity": 255, "blendMode": "normal" }
+  ]
+ }
+}

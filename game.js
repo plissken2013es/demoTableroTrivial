@@ -146,6 +146,7 @@ Trivial.Game.prototype = {
         this.hero.animations.add("walk_down", [16, 17, 18, 19, 20, 21, 22, 23], this.HERO_FPS, true);
         this.hero.animations.add("idle", [24, 25, 26, 27, 28, 28, 29, 30, 31, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48], this.HERO_FPS, true);
         this.hero.animations.add("anger", [49, 50, 51, 52, 53, 54], this.HERO_FPS, true);
+        this.hero.animations.add("joy", [55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75], this.HERO_FPS, false);
         this.hero.anchor.setTo(0.5, 1);
         this.game.physics.arcade.enable(this.hero);
         this.hero.enableBody = true;
@@ -455,6 +456,7 @@ Trivial.Game.prototype = {
             if (btn.key == "btn_blue") {
                 if (isCorrect) {
                     console.log("acertaste!");
+                    this.hero.animations.play("joy");
                     this.printCorrectAnswer();
                     finished = true;
                 } else {

@@ -7,7 +7,8 @@ Trivial.Preloader.prototype = {
         this.input.maxPointers = 1;
         this.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
         this.scale.pageAlignHorizontally = true;
-        //this.scale.pageAlignVertically = true;
+        this.scale.pageAlignVertically = true;
+        this.scale.setMinMax(180, 320, 360, 640);
         
         this.time.desiredFps = 60;
     },
@@ -26,6 +27,9 @@ Trivial.Preloader.prototype = {
         this.load.spritesheet('efecto', 'uncover_tile.png', 45, 45);
         this.load.spritesheet('explorer', 'explorer_sprite.png', 50, 60);
         this.load.spritesheet("dado", "dice.png", 64, 64);
+        
+        this.load.path = "assets/music/";
+        this.load.audio("explorer_bso", ["Desert_City.mp3", "Desert_City.ogg"])
     },
 
     create: function () {
@@ -140,7 +144,9 @@ Trivial.Game.prototype = {
         console.log(this.heroPos, Math.floor(this.heroPos/7));
         var pos = this.getPosForTile(this.heroPos);
         this.heroTarget = this.heroPos;
-        this.hero = this.add.sprite(pos.x, pos.y, "explorer", 0, this.heroLayer);
+        this.hero = this.add.sprite(pos.x, pos.y, "explorer", 81, this.heroLayer);
+        this.hero.animations.add("hide_map", [76, 77, 78, 79, 80, 81], this.HERO_FPS, false);
+        this.hero.animations.add("show_map", [81, 80, 79, 78, 77, 76], this.HERO_FPS, false);
         this.hero.animations.add("walk_right", [0, 1, 2, 3, 4, 5, 6, 7], this.HERO_FPS, true);
         this.hero.animations.add("walk_up", [8, 9, 10, 11, 12, 13, 14, 15], this.HERO_FPS, true);
         this.hero.animations.add("walk_down", [16, 17, 18, 19, 20, 21, 22, 23], this.HERO_FPS, true);
@@ -164,11 +170,16 @@ Trivial.Game.prototype = {
         console.log(this.btnBlue);
         
         // launch sample dice
+        this.firstTimeOnBoard = true;
         this.launchDice();
 
         //  Press D to toggle the debug display
         this.debugKey = this.input.keyboard.addKey(Phaser.Keyboard.D);
         this.debugKey.onUp.add(this.toggleDebug, this);
+        
+        // temporary music
+        var bso = this.add.audio("explorer_bso", 0.6, true);
+        bso.play();
     },
     
     update: function () {
@@ -391,7 +402,10 @@ Trivial.Game.prototype = {
         setTimeout(function() {
             this.hero.animations.currentAnim.stop(0, true);
             this.hero.frame = 16;
-            this.hero.animations.play("idle");
+            this.hero.animations.play("show_map");
+            this.hero.animations.currentAnim.onComplete.addOnce(function() {
+                this.hero.animations.play("idle");
+            }, this);
             if (this.heroTarget>=7 && this.heroTarget<=14) {
                 this.hero.scale.setTo(-1, 1);
             } else {
@@ -434,7 +448,15 @@ Trivial.Game.prototype = {
             console.log("complete roll dice anim", spr, ani);
             roll.animations.play("end");
             this.markTargets();
-            this.hero.animations.play("idle");
+            if (this.firstTimeOnBoard) {
+                this.firstTimeOnBoard = false;
+                this.hero.animations.play("show_map");
+                this.hero.animations.currentAnim.onComplete.addOnce(function() {
+                    this.hero.animations.play("idle");
+                }, this);
+            } else {
+                this.hero.animations.play("idle");
+            }
         }, this);
         roll.animations.play("roll", null, false);
     },
@@ -589,23 +611,27 @@ Trivial.Game.prototype = {
                 y: dest1.y,
             }, 
             this.HERO_VEL * distance1,
-            null,
-            true
+            null
         );
         
         // select anim - refactor
-        if (this.hero.x == dest1.x) {
-            if (this.hero.y > dest1.y) {
-                this.hero.animations.play("walk_up");
+        this.hero.animations.play("hide_map");
+        this.hero.animations.currentAnim.onComplete.addOnce(function() {
+            if (this.hero.x == dest1.x) {
+                if (this.hero.y > dest1.y) {
+                    this.hero.animations.play("walk_up");
+                } else {
+                    this.hero.animations.play("walk_down");
+                }
             } else {
-                this.hero.animations.play("walk_down");
+                this.hero.animations.play("walk_right");
             }
-        } else {
-            this.hero.animations.play("walk_right");
-        }
-        this.hero.scale.x = 1;
-        if (this.hero.x > dest1.x) this.hero.scale.x = -1;
-        // select anim - refactor
+            this.hero.scale.x = 1;
+            if (this.hero.x > dest1.x) this.hero.scale.x = -1;
+            // select anim - refactor
+            
+            tween1.start();
+        }, this);
         
         tween1.onComplete.addOnce(function() {
             console.log("complete tween ONE!", arguments);
@@ -663,7 +689,7 @@ Trivial.Game.prototype = {
     }
 };
 
-var game = new Phaser.Game(360, 640, Phaser.CANVAS, 'game');
+var game = new Phaser.Game(360, 640, Phaser.CANVAS);
 
 game.state.add('Trivial.Preloader', Trivial.Preloader);
 game.state.add('Trivial.Game', Trivial.Game);

@@ -22,18 +22,113 @@ Trivial.Preloader.prototype = {
         
         this.load.path = 'assets/';
         this.load.image("hero", "astro.png");
-        this.load.images(["btn_white", "btn_blue", "btn_one", "btn_two", "btn_three"]);
+        this.load.images(["btn_white", "btn_blue", "btn_one", "btn_two", "btn_three", "arrow"]);
         this.load.spritesheet('casillas', 'casillas.png', 45, 45);
         this.load.spritesheet('efecto', 'uncover_tile.png', 45, 45);
         this.load.spritesheet('explorer', 'explorer_sprite.png', 50, 60);
         this.load.spritesheet("dado", "dice.png", 64, 64);
         
         this.load.path = "assets/music/";
-        this.load.audio("explorer_bso", ["Desert_City.mp3", "Desert_City.ogg"])
+        this.load.audio("explorer_bso", ["Desert_City.mp3", "Desert_City.ogg"]);
+        this.load.audio("click", ["Out_for_Blood_Sting.mp3", "Out_for_Blood_Sting.ogg"]);
+        this.load.audio("select", ["Cartoon_Sting.mp3", "Cartoon_Sting.ogg"]);
     },
 
     create: function () {
-        this.state.start('Trivial.Game');
+        this.state.start('Trivial.Selection');
+    }
+};
+
+Trivial.Selection = function() {};
+Trivial.Selection.prototype = {
+    init: function() {
+        this.style = {
+            font: "Press Start 2P", 
+            fontSize: 9,
+            fill: "yellow",
+            stroke: "grey",
+            strokeThickness: 1,
+            align: "center", 
+            wordWrap: true, 
+            wordWrapWidth: 240
+        };
+        this.HERO_FPS = 12;
+        
+        this.inputLocked = false;
+    },
+    create: function() {
+        this.click = this.add.audio("click");
+        this.select = this.add.audio("select");
+        
+        this.selectText = this.add.text(game.world.centerX, 90, "Elige un personaje,\npor favor".toUpperCase(), this.style);
+        this.selectText.anchor.setTo(0.5);
+                
+        for (var q=0; q<4; q++) {
+            this["hero"+q] = this.createHero(50 + q*80, 250);
+        }
+        var anim = this.hero0.play("show_map");
+        anim.onComplete.addOnce(function() {
+            this.hero0.play("idle");
+        }, this);
+        this.selected = 0;
+        
+        this.arrow = this.add.image(50, 180, "arrow");
+        this.arrow.anchor.setTo(0.5, 1);
+        
+        // buttons
+        this.btnBlue = this.add.button(80, 370, "btn_blue", this.onButtonPress, this);
+        this.btnWhite = this.add.button(180, 370, "btn_white", this.onButtonPress, this);
+    },
+    // --------------------------------------------
+    createHero: function(x, y) {
+        var hero = this.add.sprite(x, y, "explorer", 16);
+        hero.animations.add("hide_map", [76, 77, 78, 79, 80, 81], this.HERO_FPS, false);
+        hero.animations.add("show_map", [81, 80, 79, 78, 77, 76], this.HERO_FPS, false);
+        hero.animations.add("walk_right", [0, 1, 2, 3, 4, 5, 6, 7], this.HERO_FPS, true);
+        hero.animations.add("walk_up", [8, 9, 10, 11, 12, 13, 14, 15], this.HERO_FPS, true);
+        hero.animations.add("walk_down", [16, 17, 18, 19, 20, 21, 22, 23], this.HERO_FPS, true);
+        hero.animations.add("idle", [24, 25, 26, 27, 28, 28, 29, 30, 31, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48], this.HERO_FPS, true);
+        hero.animations.add("anger", [49, 50, 51, 52, 53, 54], this.HERO_FPS, true);
+        hero.animations.add("joy", [55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75], this.HERO_FPS, false);
+        hero.anchor.setTo(0.5, 1);
+        return hero;
+    },
+    onButtonPress: function(btn) {
+        if (this.inputLocked) return;
+        console.log(btn.key);
+        
+        if (btn.key == "btn_white") {
+            this.click.play();
+            
+            var hero = this["hero"+this.selected];
+            var anim = hero.play("hide_map");
+            anim.onComplete.addOnce(function() {
+                hero.frame = 16;
+            }, this);
+            
+            if (++this.selected > 3) this.selected = 0;
+            this.arrow.position.x = 50 + 80*this.selected;
+            
+            var hero2 = this["hero"+this.selected];
+            var anim2 = hero2.play("show_map");
+            anim2.onComplete.addOnce(function() {
+                hero2.play("idle");
+            }, this);
+        }
+        
+        if (btn.key == "btn_blue") {
+            this.select.play();
+            
+            this.inputLocked = true;
+            var anim = this["hero"+this.selected].play("joy");
+            anim.onComplete.addOnce(function() {
+                var pause = this.time.create();
+                pause.add(400, function() {
+                    this.state.start("Trivial.Game");
+                }, this);
+                pause.start();
+            }, this);
+        }
     }
 };
 
@@ -692,6 +787,7 @@ Trivial.Game.prototype = {
 var game = new Phaser.Game(360, 640, Phaser.CANVAS);
 
 game.state.add('Trivial.Preloader', Trivial.Preloader);
+game.state.add('Trivial.Selection', Trivial.Selection);
 game.state.add('Trivial.Game', Trivial.Game);
 
 game.state.start('Trivial.Preloader');

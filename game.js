@@ -24,8 +24,10 @@ Trivial.Preloader.prototype = {
         this.load.image("hero", "astro.png");
         this.load.images(["btn_white", "btn_blue", "btn_one", "btn_two", "btn_three", "arrow"]);
         this.load.spritesheet('casillas', 'casillas.png', 45, 45);
+        this.load.spritesheet("tiles", "bad_tiles.png", 45, 45);
         this.load.spritesheet('efecto', 'uncover_tile.png', 45, 45);
         this.load.spritesheet('explorer', 'explorer_sprite.png', 50, 60);
+        this.load.spritesheet('rajoy', '_exports/rajoy_anims.png', 32, 48);
         this.load.spritesheet("dado", "dice.png", 64, 64);
         
         this.load.path = "assets/music/";
@@ -81,16 +83,16 @@ Trivial.Selection.prototype = {
     },
     // --------------------------------------------
     createHero: function(x, y) {
-        var hero = this.add.sprite(x, y, "explorer", 16);
-        hero.animations.add("hide_map", [76, 77, 78, 79, 80, 81], this.HERO_FPS, false);
-        hero.animations.add("show_map", [81, 80, 79, 78, 77, 76], this.HERO_FPS, false);
-        hero.animations.add("walk_right", [0, 1, 2, 3, 4, 5, 6, 7], this.HERO_FPS, true);
-        hero.animations.add("walk_up", [8, 9, 10, 11, 12, 13, 14, 15], this.HERO_FPS, true);
-        hero.animations.add("walk_down", [16, 17, 18, 19, 20, 21, 22, 23], this.HERO_FPS, true);
-        hero.animations.add("idle", [24, 25, 26, 27, 28, 28, 29, 30, 31, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48], this.HERO_FPS, true);
-        hero.animations.add("anger", [49, 50, 51, 52, 53, 54], this.HERO_FPS, true);
-        hero.animations.add("joy", [55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75], this.HERO_FPS, false);
-        hero.anchor.setTo(0.5, 1);
+        var hero = this.add.sprite(x, y, "rajoy", 16);
+        hero.animations.add("hide_map", [6], this.HERO_FPS, false);
+        hero.animations.add("show_map", [6], this.HERO_FPS, false);
+        hero.animations.add("walk_right", [0, 1, 2, 3, 4, 5], this.HERO_FPS, true);
+        hero.animations.add("walk_up", [11, 12, 13], this.HERO_FPS, true);
+        hero.animations.add("walk_down", [7, 8, 9], this.HERO_FPS, true);
+        hero.animations.add("idle", [6], this.HERO_FPS, true);
+        hero.animations.add("anger", [6], this.HERO_FPS, true);
+        hero.animations.add("joy", [6], this.HERO_FPS, false);
+        hero.anchor.setTo(0, 1);
         return hero;
     },
     onButtonPress: function(btn) {
@@ -197,7 +199,7 @@ Trivial.Game.prototype = {
         this.boardList = new Phaser.ArraySet();
         for (var q=0;q<8;q++) {
             var type = (q == 7)?1:(q>0)?4:0;
-            var tile = this.add.sprite(q*45, 100, "casillas", type*4, this.boardTiles);
+            var tile = this.add.sprite(q*45, 100, "tiles", type*4, this.boardTiles);
             tile.initialFrame = tile.frame;
             tile.anchor.setTo(0, 0.5);
             this.game.physics.arcade.enable(tile);
@@ -206,7 +208,7 @@ Trivial.Game.prototype = {
             this.boardList.add(tile);
         }
         for (q=0;q<6;q++) {
-            tile = this.add.sprite(7*45, 134+(q*34), "casillas", 16, this.boardTiles);
+            tile = this.add.sprite(7*45, 134+(q*34), "tiles", 16, this.boardTiles);
             tile.initialFrame = tile.frame;
             tile.anchor.setTo(0, 0.5);
             this.game.physics.arcade.enable(tile);
@@ -216,7 +218,7 @@ Trivial.Game.prototype = {
         }
         for (q=8;q--;) {
             type = (q == 7)?2:(q>0)?4:3;
-            tile = this.add.sprite(q*45, 134+(6*34), "casillas", type*4, this.boardTiles);
+            tile = this.add.sprite(q*45, 134+(6*34), "tiles", type*4, this.boardTiles);
             tile.initialFrame = tile.frame;
             tile.anchor.setTo(0, 0.5);
             this.game.physics.arcade.enable(tile);
@@ -225,7 +227,7 @@ Trivial.Game.prototype = {
             this.boardList.add(tile);
         }
         for (q=6;q--;) {
-            tile = this.add.sprite(0, 134+(q*34), "casillas", 16, this.boardTiles);
+            tile = this.add.sprite(0, 134+(q*34), "tiles", 16, this.boardTiles);
             tile.initialFrame = tile.frame;
             tile.anchor.setTo(0, 0.5);
             this.game.physics.arcade.enable(tile);
@@ -239,15 +241,15 @@ Trivial.Game.prototype = {
         console.log(this.heroPos, Math.floor(this.heroPos/7));
         var pos = this.getPosForTile(this.heroPos);
         this.heroTarget = this.heroPos;
-        this.hero = this.add.sprite(pos.x, pos.y, "explorer", 81, this.heroLayer);
-        this.hero.animations.add("hide_map", [76, 77, 78, 79, 80, 81], this.HERO_FPS, false);
-        this.hero.animations.add("show_map", [81, 80, 79, 78, 77, 76], this.HERO_FPS, false);
-        this.hero.animations.add("walk_right", [0, 1, 2, 3, 4, 5, 6, 7], this.HERO_FPS, true);
-        this.hero.animations.add("walk_up", [8, 9, 10, 11, 12, 13, 14, 15], this.HERO_FPS, true);
-        this.hero.animations.add("walk_down", [16, 17, 18, 19, 20, 21, 22, 23], this.HERO_FPS, true);
-        this.hero.animations.add("idle", [24, 25, 26, 27, 28, 28, 29, 30, 31, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48], this.HERO_FPS, true);
-        this.hero.animations.add("anger", [49, 50, 51, 52, 53, 54], this.HERO_FPS, true);
-        this.hero.animations.add("joy", [55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75], this.HERO_FPS, false);
+        this.hero = this.add.sprite(pos.x, pos.y, "rajoy", 81, this.heroLayer);
+        this.hero.animations.add("hide_map", [6], this.HERO_FPS, false);
+        this.hero.animations.add("show_map", [6], this.HERO_FPS, false);
+        this.hero.animations.add("walk_right", [0, 1, 2, 3, 4, 5], this.HERO_FPS, true);
+        this.hero.animations.add("walk_up", [11, 12, 13], this.HERO_FPS, true);
+        this.hero.animations.add("walk_down", [7, 8, 9], this.HERO_FPS, true);
+        this.hero.animations.add("idle", [6], this.HERO_FPS, true);
+        this.hero.animations.add("anger", [6], this.HERO_FPS, true);
+        this.hero.animations.add("joy", [6], this.HERO_FPS, false);
         this.hero.anchor.setTo(0.5, 1);
         this.game.physics.arcade.enable(this.hero);
         this.hero.enableBody = true;
